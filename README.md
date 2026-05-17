@@ -2,8 +2,8 @@
 
 **Production-grade Retrieval-Augmented Generation system for SEC 10-K financial filings.**
 
-[![CI](https://github.com/yourusername/insightrag/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/insightrag/actions)
-[![Coverage](https://codecov.io/gh/yourusername/insightrag/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/insightrag)
+[![CI](https://github.com/Anila-Ijaz/insightrag/actions/workflows/ci.yml/badge.svg)](https://github.com/Anila-Ijaz/insightrag/actions)
+[![Coverage](https://codecov.io/gh/Anila-Ijaz/insightrag/branch/main/graph/badge.svg)](https://codecov.io/gh/Anila-Ijaz/insightrag)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -90,11 +90,10 @@ Most public RAG projects stop at "embed → store → retrieve → generate". Th
 
 ```bash
 # 1. Clone and set env
-git clone https://github.com/yourusername/insightrag
+git clone https://github.com/Anila-Ijaz/insightrag
 cd insightrag
 cp .env.example .env
 # edit .env: set OPENAI_API_KEY
-
 # 2. Bring up the full stack
 make up
 
