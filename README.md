@@ -2,7 +2,6 @@
 
 **Production-grade Retrieval-Augmented Generation system for SEC 10-K financial filings.**
 
-[![CI](https://github.com/Anila-Ijaz/insightrag/actions/workflows/ci.yml/badge.svg)](https://github.com/Anila-Ijaz/insightrag/actions)
 [![Coverage](https://codecov.io/gh/Anila-Ijaz/insightrag/branch/main/graph/badge.svg)](https://codecov.io/gh/Anila-Ijaz/insightrag)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
