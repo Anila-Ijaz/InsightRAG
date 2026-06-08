@@ -12,9 +12,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-import torch
 from loguru import logger
-from sentence_transformers import CrossEncoder
 
 from insightrag.config import get_settings
 from insightrag.retrieval.hybrid import RetrievedChunk
@@ -22,6 +20,11 @@ from insightrag.retrieval.hybrid import RetrievedChunk
 
 class CrossEncoderReranker:
     def __init__(self, model_name: str, device: str | None = None):
+        # Lazy import: the lite deployment runs with the reranker disabled and does
+        # not install torch / sentence-transformers.
+        import torch
+        from sentence_transformers import CrossEncoder
+
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         logger.info(f"Loading reranker: {model_name} on {self.device}")
         self.model = CrossEncoder(model_name, device=self.device, max_length=512)

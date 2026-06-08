@@ -89,11 +89,13 @@ class QdrantStore:
         """Dense vector search with optional metadata filtering."""
         query_filter = self._build_filter(filter_payload) if filter_payload else None
 
-        results = await self.client.search(
+        # query_points is the current API (search() was removed in qdrant-client 1.14+).
+        response = await self.client.query_points(
             collection_name=self.collection,
-            query_vector=query_vector.tolist(),
+            query=query_vector.tolist(),
             limit=top_k,
             query_filter=query_filter,
+            with_payload=True,
         )
         return [
             ScoredPoint(
@@ -102,7 +104,7 @@ class QdrantStore:
                 score=r.score,
                 metadata={k: v for k, v in r.payload.items() if k not in {"chunk_id", "text"}},
             )
-            for r in results
+            for r in response.points
         ]
 
     @staticmethod

@@ -34,11 +34,17 @@ class Settings(BaseSettings):
     llm_max_tokens: int = 1024
 
     # ── Embeddings ───────────────────────────────────────────────────
+    # provider="local"  → BGE via sentence-transformers (full stack, needs torch)
+    # provider="openai" → OpenAI embeddings API (lite stack, no local model/torch)
+    embedding_provider: Literal["local", "openai"] = "local"
     embedding_model: str = "BAAI/bge-base-en-v1.5"
-    embedding_dim: int = 768
+    openai_embedding_model: str = "text-embedding-3-small"
+    embedding_dim: int = 768  # 768 for bge-base; set 1536 for text-embedding-3-small
     embedding_device: Literal["cpu", "cuda", "mps"] = "cpu"
 
     # ── Reranker ─────────────────────────────────────────────────────
+    # Disable for the lite deployment — the cross-encoder needs torch and ~0.4GB RAM.
+    enable_reranker: bool = True
     reranker_model: str = "BAAI/bge-reranker-base"
     reranker_top_k: int = 5
 

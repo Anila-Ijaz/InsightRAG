@@ -14,7 +14,7 @@ from dataclasses import dataclass
 
 from loguru import logger
 
-from insightrag.ingestion.embedder import EmbeddingModel
+from insightrag.ingestion.embedder import Embedder
 from insightrag.retrieval.bm25_index import BM25Index
 from insightrag.retrieval.vector_store import QdrantStore
 
@@ -33,7 +33,7 @@ class HybridRetriever:
         self,
         vector_store: QdrantStore,
         bm25_index: BM25Index,
-        embedder: EmbeddingModel,
+        embedder: Embedder,
         alpha: float = 0.6,
         fusion: str = "rrf",
     ):

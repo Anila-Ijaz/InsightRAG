@@ -57,7 +57,7 @@ class RAGChain:
     def __init__(
         self,
         retriever: HybridRetriever,
-        reranker: CrossEncoderReranker,
+        reranker: CrossEncoderReranker | None,
         llm: LLMClient,
         input_guard: InputGuard,
         output_guard: OutputGuard,
@@ -82,7 +82,11 @@ class RAGChain:
         retrieval_ms = (perf_counter() - t0) * 1000
 
         t1 = perf_counter()
-        top_chunks = self.reranker.rerank(query, candidates, top_k=self.rerank_top_k)
+        if self.reranker is not None:
+            top_chunks = self.reranker.rerank(query, candidates, top_k=self.rerank_top_k)
+        else:
+            # Lite mode: no cross-encoder — fall back to the fused retrieval order.
+            top_chunks = candidates[: self.rerank_top_k]
         rerank_ms = (perf_counter() - t1) * 1000
 
         return top_chunks, retrieval_ms, rerank_ms

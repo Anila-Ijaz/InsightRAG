@@ -1,0 +1,34 @@
+# Lite runtime dependencies — the subset actually imported by the API/ingest/query
+# code path when EMBEDDING_PROVIDER=openai and the reranker + PII redaction are off.
+#
+# Deliberately excludes the heavy ML stack (torch, sentence-transformers, transformers,
+# datasets, accelerate), unstructured/pypdf, presidio, celery, sqlalchemy/asyncpg, redis,
+# boto3 and opentelemetry — none are on the lite path. This keeps the image small enough
+# to run on a free-tier t3.micro (1 GB RAM).
+
+# Core API
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+pydantic>=2.9.0
+pydantic-settings>=2.6.0
+python-multipart>=0.0.12
+sse-starlette>=2.1.3
+
+# LLM + embeddings (OpenAI API) + tokenization
+openai>=1.54.0
+tiktoken>=0.8.0
+tenacity>=9.0.0
+
+# Retrieval
+qdrant-client>=1.12.0
+rank-bm25>=0.2.2
+numpy>=1.26.0
+
+# Ingestion (SEC EDGAR 10-K parsing)
+beautifulsoup4>=4.12.0
+lxml>=5.3.0
+sec-edgar-downloader>=5.0.3
+
+# Observability
+loguru>=0.7.2
+prometheus-client>=0.21.0

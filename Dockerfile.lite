@@ -1,0 +1,58 @@
+# syntax=docker/dockerfile:1.7
+#
+# Lite image for free-tier hosting (e.g. AWS t3.micro).
+# Uses OpenAI for embeddings + generation, reranker disabled — no torch/sentence-transformers.
+# Build:  docker build -f Dockerfile.lite -t insightrag:lite .
+
+# ───────────────────── builder ─────────────────────
+FROM python:3.11-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install the lite dependency set first (cached layer), then the package without deps.
+COPY requirements-lite.txt ./
+RUN pip install --upgrade pip && pip install -r requirements-lite.txt
+
+COPY pyproject.toml ./
+COPY src/ ./src/
+RUN pip install --no-deps .
+
+# ───────────────────── runtime ─────────────────────
+FROM python:3.11-slim AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -r app && useradd -r -g app -d /app -s /sbin/nologin app
+
+WORKDIR /app
+COPY --from=builder /opt/venv /opt/venv
+COPY --chown=app:app src/ ./src/
+
+# Writable dir for the persisted BM25 index + downloaded filings.
+RUN mkdir -p /app/data && chown -R app:app /app
+
+USER app
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD curl --fail http://localhost:8000/healthz || exit 1
+
+# One worker keeps memory low for a 1 GB box; bump on larger instances.
+CMD ["uvicorn", "insightrag.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

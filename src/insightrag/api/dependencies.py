@@ -39,9 +39,10 @@ def get_rag_chain() -> RAGChain:
         alpha=settings.hybrid_alpha,
         fusion="rrf",
     )
+    reranker = get_reranker() if settings.enable_reranker else None
     return RAGChain(
         retriever=retriever,
-        reranker=get_reranker(),
+        reranker=reranker,
         llm=get_llm_client(),
         input_guard=get_input_guard(),
         output_guard=get_output_guard(),
