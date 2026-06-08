@@ -30,6 +30,19 @@ services:
       - app-data:/app/data
     restart: unless-stopped
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: insightrag-ui-lite
+    ports:
+      - "${UI_PORT:-8501}:8501"
+    environment:
+      - INSIGHTRAG_API_URL=http://api:8000
+    depends_on:
+      - api
+    restart: unless-stopped
+
   qdrant:
     image: qdrant/qdrant:v1.12.4
     container_name: insightrag-qdrant-lite
