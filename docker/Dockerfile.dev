@@ -1,0 +1,41 @@
+# syntax=docker/dockerfile:1.7
+#
+# Development image — same base as production, but with dev tooling (ipython, ipdb,
+# pytest, ruff) and hot-reload uvicorn. Use this with docker-compose.override.yml
+# for a fast inner dev loop.
+#
+# Build:   docker build -f docker/Dockerfile.dev -t insightrag-dev .
+
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    HF_HOME=/app/.cache/huggingface \
+    PYTHONBREAKPOINT=ipdb.set_trace
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        curl \
+        git \
+        libgomp1 \
+        vim-tiny \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY pyproject.toml ./
+COPY src/ ./src/
+
+# Install with dev extras + extra debugging tools
+RUN pip install --upgrade pip && \
+    pip install -e ".[dev,eval]" && \
+    pip install ipdb ipython watchfiles
+
+# Source is bind-mounted at runtime, so changes are picked up live
+EXPOSE 8000
+
+# --reload watches src/ for changes; watchfiles is faster than the default
+CMD ["uvicorn", "insightrag.api.main:app", \
+     "--host", "0.0.0.0", "--port", "8000", \
+     "--reload", "--reload-dir", "src"]

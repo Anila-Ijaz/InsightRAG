@@ -1,0 +1,20 @@
+# Override file applied automatically by `docker compose up` when present.
+# Activates hot-reload dev image with source bind-mounted. Use:
+#   cp docker/docker-compose.override.yml docker-compose.override.yml
+# (gitignored), then `docker compose up`.
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    volumes:
+      - ./src:/app/src:ro
+      - ./tests:/app/tests:ro
+    environment:
+      - LOG_LEVEL=DEBUG
+      - ENVIRONMENT=dev
+    # Override the production CMD with the reload version
+    command: ["uvicorn", "insightrag.api.main:app",
+              "--host", "0.0.0.0", "--port", "8000",
+              "--reload", "--reload-dir", "/app/src"]

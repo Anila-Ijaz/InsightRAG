@@ -1,0 +1,41 @@
+name: Nightly Eval
+
+on:
+  schedule:
+    - cron: "0 3 * * *"  # 03:00 UTC daily
+  workflow_dispatch:
+
+jobs:
+  ragas-eval:
+    runs-on: ubuntu-latest
+    services:
+      qdrant:
+        image: qdrant/qdrant:v1.12.4
+        ports:
+          - 6333:6333
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: pip install -e ".[dev,eval]"
+      - name: Start API
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          QDRANT_URL: http://localhost:6333
+        run: |
+          uvicorn insightrag.api.main:app --port 8000 &
+          sleep 20
+      - name: Ingest test corpus
+        run: curl -X POST http://localhost:8000/v1/ingest -H "content-type: application/json" -d '{"ticker":"AAPL","limit":1}'
+      - name: Run RAGAS
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python evals/run_ragas.py --testset evals/testset.jsonl --output evals/results.json
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results
+          path: evals/results.json

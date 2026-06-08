@@ -1,0 +1,96 @@
+services:
+  api:
+    build: .
+    container_name: insightrag-api
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=dev
+      - QDRANT_URL=http://qdrant:6333
+      - POSTGRES_URL=postgresql+asyncpg://insightrag:insightrag@postgres:5432/insightrag
+      - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - LLM_MODEL=${LLM_MODEL:-gpt-4o-mini}
+      - ENABLE_PII_REDACTION=${ENABLE_PII_REDACTION:-false}
+    depends_on:
+      qdrant:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - hf-cache:/app/.cache
+      - app-data:/app/data
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.12.4
+    container_name: insightrag-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant-data:/qdrant/storage
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: insightrag-postgres
+    environment:
+      POSTGRES_USER: insightrag
+      POSTGRES_PASSWORD: insightrag
+      POSTGRES_DB: insightrag
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U insightrag"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: insightrag-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  prometheus:
+    image: prom/prometheus:v2.55.0
+    container_name: insightrag-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: insightrag-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - grafana-data:/var/lib/grafana
+
+volumes:
+  qdrant-data:
+  postgres-data:
+  redis-data:
+  prometheus-data:
+  grafana-data:
+  hf-cache:
+  app-data:

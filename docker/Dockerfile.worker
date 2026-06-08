@@ -1,0 +1,53 @@
+# syntax=docker/dockerfile:1.7
+#
+# Celery worker image — same dependencies as the API but a different entrypoint.
+# In production, ingestion should be async (POST /ingest returns 202 and enqueues a
+# Celery task). This image is the consumer side of that queue.
+#
+# Build:   docker build -f docker/Dockerfile.worker -t insightrag-worker .
+# Run:     docker run --env-file .env insightrag-worker
+
+FROM python:3.11-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+COPY pyproject.toml ./
+COPY src/ ./src/
+
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+RUN pip install --upgrade pip && pip install .
+
+
+FROM python:3.11-slim AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH" \
+    HF_HOME=/app/.cache/huggingface
+
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -r app && useradd -r -g app -d /app -s /sbin/nologin app
+
+WORKDIR /app
+COPY --from=builder /opt/venv /opt/venv
+COPY --chown=app:app src/ ./src/
+
+RUN mkdir -p /app/data /app/.cache && chown -R app:app /app
+USER app
+
+# Worker concurrency tuned for CPU-bound embedding work.
+# For embeddings, --concurrency should ~= number of CPU cores; do NOT use the
+# default prefork pool with high concurrency on small machines or you'll OOM.
+CMD ["celery", "-A", "insightrag.tasks", "worker", \
+     "--loglevel=info", \
+     "--concurrency=2", \
+     "--max-tasks-per-child=50"]
