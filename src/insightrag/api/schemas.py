@@ -1,4 +1,5 @@
 """Request/response schemas. Strict pydantic models — no untyped dicts cross the API boundary."""
+
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
@@ -6,7 +7,12 @@ from pydantic import BaseModel, Field
 
 class QueryRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=1000)
-    ticker: str | None = Field(None, description="Filter to a specific company ticker")
+    ticker: str | None = Field(
+        None,
+        max_length=10,
+        pattern=r"^[A-Z\.]+$",
+        description="Filter to a specific company ticker (uppercase letters/dots)",
+    )
     section: str | None = Field(None, description="Filter to a specific 10-K section")
     top_k: int = Field(5, ge=1, le=20)
 

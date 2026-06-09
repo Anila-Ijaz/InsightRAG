@@ -3,6 +3,7 @@
 This is the main entry point that ties retrieval → reranking → generation together.
 Designed for both batch (complete) and streaming (stream) modes.
 """
+
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
@@ -95,7 +96,9 @@ class RAGChain:
         t_start = perf_counter()
         question = self.input_guard.process(question)
 
-        top_chunks, retrieval_ms, rerank_ms = await self._retrieve_and_rerank(question, filter_payload)
+        top_chunks, retrieval_ms, rerank_ms = await self._retrieve_and_rerank(
+            question, filter_payload
+        )
         system, user = build_rag_prompt(question, top_chunks)
 
         t_gen = perf_counter()
@@ -130,7 +133,9 @@ class RAGChain:
         t_start = perf_counter()
         question = self.input_guard.process(question)
 
-        top_chunks, retrieval_ms, rerank_ms = await self._retrieve_and_rerank(question, filter_payload)
+        top_chunks, retrieval_ms, rerank_ms = await self._retrieve_and_rerank(
+            question, filter_payload
+        )
         system, user = build_rag_prompt(question, top_chunks)
 
         yield {

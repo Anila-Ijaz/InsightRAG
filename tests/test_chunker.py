@@ -6,7 +6,9 @@ def test_chunker_respects_size():
     chunker = SemanticChunker(chunk_size=100, chunk_overlap=20)
     long_text = ("Apple reported strong revenue growth in the most recent quarter. " * 50).strip()
     doc = ParsedDocument(
-        ticker="AAPL", filing_date="2023-10-30", accession_number="000",
+        ticker="AAPL",
+        filing_date="2023-10-30",
+        accession_number="000",
         sections=[ParsedSection(name="mda", text=long_text, order=0)],
     )
     chunks = list(chunker.chunk_document(doc))
@@ -19,7 +21,9 @@ def test_chunker_respects_size():
 def test_chunker_metadata_preserved():
     chunker = SemanticChunker(chunk_size=200, chunk_overlap=20)
     doc = ParsedDocument(
-        ticker="TSLA", filing_date="2024-01-29", accession_number="abc",
+        ticker="TSLA",
+        filing_date="2024-01-29",
+        accession_number="abc",
         sections=[ParsedSection(name="risk_factors", text="A " * 500, order=1)],
     )
     chunks = list(chunker.chunk_document(doc))
@@ -31,7 +35,9 @@ def test_chunker_metadata_preserved():
 def test_chunker_drops_tiny_chunks(sample_chunk_text):
     chunker = SemanticChunker(chunk_size=512, chunk_overlap=64)
     doc = ParsedDocument(
-        ticker="AAPL", filing_date="2023-10-30", accession_number="x",
+        ticker="AAPL",
+        filing_date="2023-10-30",
+        accession_number="x",
         sections=[
             ParsedSection(name="mda", text=sample_chunk_text, order=0),
             ParsedSection(name="risk_factors", text="tiny", order=1),  # dropped
@@ -45,5 +51,6 @@ def test_chunker_drops_tiny_chunks(sample_chunk_text):
 
 def test_chunker_rejects_invalid_overlap():
     import pytest
+
     with pytest.raises(ValueError):
         SemanticChunker(chunk_size=100, chunk_overlap=100)

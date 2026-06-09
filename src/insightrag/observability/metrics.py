@@ -3,6 +3,7 @@
 These get scraped by Prometheus at /metrics and visualized in Grafana.
 Conventions follow Prometheus naming: <name>_<unit>{labels}.
 """
+
 from prometheus_client import Counter, Histogram
 
 QUERY_COUNTER = Counter(

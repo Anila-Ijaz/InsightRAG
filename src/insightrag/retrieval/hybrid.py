@@ -8,6 +8,7 @@ Why hybrid:
 Fusion strategy: Reciprocal Rank Fusion (RRF) is parameter-free and consistently strong
 across benchmarks. Weighted score fusion (alpha) is also offered for tuning experiments.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -55,13 +56,16 @@ class HybridRetriever:
     ) -> list[RetrievedChunk]:
         # Run both retrievals
         query_vec = self.embedder.encode_query(query)
-        dense_results = await self.vector_store.search(query_vec, top_k=top_k, filter_payload=filter_payload)
+        dense_results = await self.vector_store.search(
+            query_vec, top_k=top_k, filter_payload=filter_payload
+        )
         sparse_results = self.bm25_index.search(query, top_k=top_k)
 
         # Apply payload filter to sparse results too (BM25 doesn't natively support it)
         if filter_payload:
             sparse_results = [
-                r for r in sparse_results
+                r
+                for r in sparse_results
                 if all(r.metadata.get(k) == v for k, v in filter_payload.items())
             ]
 
@@ -89,8 +93,11 @@ class HybridRetriever:
         for rank, hit in enumerate(dense):
             scores[hit.chunk_id] = scores.get(hit.chunk_id, 0.0) + 1.0 / (k + rank + 1)
             chunks[hit.chunk_id] = RetrievedChunk(
-                chunk_id=hit.chunk_id, text=hit.text, score=0.0,
-                metadata=hit.metadata, source="dense",
+                chunk_id=hit.chunk_id,
+                text=hit.text,
+                score=0.0,
+                metadata=hit.metadata,
+                source="dense",
             )
 
         for rank, hit in enumerate(sparse):
@@ -99,8 +106,11 @@ class HybridRetriever:
                 chunks[hit.chunk_id].source = "hybrid"
             else:
                 chunks[hit.chunk_id] = RetrievedChunk(
-                    chunk_id=hit.chunk_id, text=hit.text, score=0.0,
-                    metadata=hit.metadata, source="sparse",
+                    chunk_id=hit.chunk_id,
+                    text=hit.text,
+                    score=0.0,
+                    metadata=hit.metadata,
+                    source="sparse",
                 )
 
         for cid, score in scores.items():
@@ -108,10 +118,9 @@ class HybridRetriever:
 
         return sorted(chunks.values(), key=lambda c: c.score, reverse=True)[:top_k]
 
-    def _weighted_fusion(
-        self, dense, sparse, top_k: int
-    ) -> list[RetrievedChunk]:
+    def _weighted_fusion(self, dense, sparse, top_k: int) -> list[RetrievedChunk]:
         """Min-max normalize scores per ranker, then weighted sum."""
+
         def normalize(hits):
             if not hits:
                 return {}
@@ -128,8 +137,11 @@ class HybridRetriever:
         for h in dense + sparse:
             if h.chunk_id not in chunks:
                 chunks[h.chunk_id] = RetrievedChunk(
-                    chunk_id=h.chunk_id, text=h.text, score=0.0,
-                    metadata=h.metadata, source="dense",
+                    chunk_id=h.chunk_id,
+                    text=h.text,
+                    score=0.0,
+                    metadata=h.metadata,
+                    source="dense",
                 )
 
         for cid in all_ids:

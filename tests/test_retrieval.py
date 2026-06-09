@@ -1,6 +1,7 @@
 """Tests for hybrid retrieval — focuses on the fusion logic which is pure-Python and testable
 without requiring Qdrant/embedder. We use stubs for the IO-bound dependencies.
 """
+
 from unittest.mock import AsyncMock, MagicMock
 
 import numpy as np

@@ -3,6 +3,7 @@
 In production we emit JSON logs that get shipped to Loki/CloudWatch/Datadog.
 In dev we emit pretty-printed colorized logs to stderr.
 """
+
 from __future__ import annotations
 
 import sys

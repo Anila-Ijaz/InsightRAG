@@ -6,6 +6,7 @@ We do three things on incoming user queries:
    would add a classifier like Lakera or a fine-tuned BERT model)
 3. PII redaction — strip emails/SSNs/credit cards before sending to the LLM provider
 """
+
 from __future__ import annotations
 
 import re
@@ -13,7 +14,6 @@ import re
 from loguru import logger
 
 from insightrag.config import get_settings
-
 
 # Heuristic prompt-injection patterns. Not exhaustive — defense in depth requires
 # also separating context from instructions structurally (which we do in prompts.py).
@@ -28,7 +28,7 @@ INJECTION_PATTERNS = [
 ]
 
 
-class PromptInjectionDetected(Exception):
+class PromptInjectionError(Exception):
     """Raised when a query is flagged as a probable prompt injection attempt."""
 
 
@@ -64,7 +64,7 @@ class InputGuard:
             for pattern in INJECTION_PATTERNS:
                 if pattern.search(text):
                     logger.warning(f"Prompt injection detected: pattern={pattern.pattern}")
-                    raise PromptInjectionDetected(
+                    raise PromptInjectionError(
                         "Your query contains patterns that look like a prompt injection attempt."
                     )
 

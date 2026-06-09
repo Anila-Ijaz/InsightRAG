@@ -4,12 +4,13 @@ Downloads filings from SEC EDGAR and extracts structured sections.
 10-Ks have a well-known structure (Item 1, Item 1A, Item 7, etc.) which we
 preserve as section metadata for better retrieval grounding.
 """
+
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterator
 
 from bs4 import BeautifulSoup
 from loguru import logger

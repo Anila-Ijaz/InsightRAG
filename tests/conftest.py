@@ -1,12 +1,18 @@
 """Pytest configuration and shared fixtures."""
+
 import os
 
 import pytest
 
-# Force test settings before any imports trigger Settings()
+# Force test settings before any imports trigger Settings().
+# Lite config keeps the app's startup lightweight in tests: OpenAI-provider embeddings
+# (constructed lazily, no network) and no reranker mean the lifespan builds the RAG chain
+# without downloading any local ML models.
 os.environ.setdefault("ENVIRONMENT", "dev")
 os.environ.setdefault("OPENAI_API_KEY", "test-key-do-not-use")
 os.environ.setdefault("ENABLE_PII_REDACTION", "false")
+os.environ.setdefault("EMBEDDING_PROVIDER", "openai")
+os.environ.setdefault("ENABLE_RERANKER", "false")
 
 
 @pytest.fixture

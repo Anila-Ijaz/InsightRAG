@@ -5,12 +5,12 @@ We validate that:
 2. Citations referenced in the answer exist in the provided chunks (no invented [99] refs).
 3. The output isn't suspiciously short (model refused to answer) — we let it through but log.
 """
+
 from __future__ import annotations
 
 import re
 
 from loguru import logger
-
 
 CITATION_PATTERN = re.compile(r"\[(\d+)\]")
 LEAK_PATTERNS = [
@@ -36,7 +36,9 @@ class OutputGuard:
             cited = {int(m) for m in CITATION_PATTERN.findall(cleaned)}
             invalid = {c for c in cited if c < 1 or c > n_chunks_provided}
             if invalid:
-                logger.warning(f"Invalid citations found: {invalid} (only {n_chunks_provided} chunks)")
+                logger.warning(
+                    f"Invalid citations found: {invalid} (only {n_chunks_provided} chunks)"
+                )
                 # Strip invalid citations rather than fail
                 for inv in invalid:
                     cleaned = cleaned.replace(f"[{inv}]", "")

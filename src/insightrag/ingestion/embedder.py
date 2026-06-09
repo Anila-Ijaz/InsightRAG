@@ -13,6 +13,7 @@ Two interchangeable providers, selected via `EMBEDDING_PROVIDER`:
 Both expose the same interface (`encode_passages`, `encode_query`, `.dim`) so the
 rest of the pipeline is provider-agnostic.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -22,7 +23,6 @@ import numpy as np
 from loguru import logger
 
 from insightrag.config import get_settings
-
 
 # BGE recommends prefixing queries (not passages) with a retrieval instruction.
 # This asymmetric setup matches how the model was trained.

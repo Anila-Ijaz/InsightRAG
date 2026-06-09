@@ -3,10 +3,11 @@
 All settings are loaded from environment variables (or a `.env` file in dev).
 This follows the 12-factor app methodology — never hardcode secrets or env-specific values.
 """
+
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 

@@ -3,6 +3,7 @@
 Single interface across OpenAI and Anthropic. Configurable via env. Streaming returns
 async iterators of text deltas, which the API layer forwards as SSE.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -94,7 +95,9 @@ class AnthropicClient(LLMClient):
 @lru_cache(maxsize=1)
 def get_llm_client() -> LLMClient:
     settings = get_settings()
-    logger.info(f"Initializing LLM client: provider={settings.llm_provider} model={settings.llm_model}")
+    logger.info(
+        f"Initializing LLM client: provider={settings.llm_provider} model={settings.llm_model}"
+    )
 
     if settings.llm_provider == "openai":
         if not settings.openai_api_key:

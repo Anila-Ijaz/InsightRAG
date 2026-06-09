@@ -5,6 +5,7 @@ OpenSearch/Elasticsearch — same interface, swap implementation. BM25 catches e
 signals (ticker symbols, specific dollar amounts, product names) that dense embeddings
 sometimes miss.
 """
+
 from __future__ import annotations
 
 import pickle

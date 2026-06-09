@@ -4,11 +4,12 @@ Naive fixed-size splitting destroys context. We use a recursive strategy that
 prefers natural boundaries: paragraphs > sentences > words. Each chunk carries
 section metadata so the retriever can use it for filtering/boosting.
 """
+
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 import tiktoken
 
@@ -35,7 +36,9 @@ class SemanticChunker:
     than character heuristics — especially for financial docs heavy on numbers and tickers.
     """
 
-    def __init__(self, chunk_size: int = 512, chunk_overlap: int = 64, encoding: str = "cl100k_base"):
+    def __init__(
+        self, chunk_size: int = 512, chunk_overlap: int = 64, encoding: str = "cl100k_base"
+    ):
         if chunk_overlap >= chunk_size:
             raise ValueError("chunk_overlap must be smaller than chunk_size")
         self.chunk_size = chunk_size

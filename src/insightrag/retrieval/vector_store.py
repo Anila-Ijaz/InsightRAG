@@ -6,6 +6,7 @@ Why Qdrant:
 - Self-hostable + has managed cloud
 - Simple HTTP/gRPC API, good Python client
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

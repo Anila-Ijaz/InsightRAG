@@ -6,10 +6,10 @@ Design choices baked in:
 - We separate the role/task instructions (system) from the data + question (user) — this
   pattern is most robust to prompt injection from retrieved content.
 """
+
 from __future__ import annotations
 
 from insightrag.retrieval.hybrid import RetrievedChunk
-
 
 SYSTEM_PROMPT = """You are InsightRAG, a financial research assistant specializing in SEC filings.
 

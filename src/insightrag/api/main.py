@@ -8,6 +8,7 @@ Exposes:
   GET  /readyz            — readiness probe (checks Qdrant, embedder)
   GET  /metrics           — Prometheus metrics
 """
+
 from __future__ import annotations
 
 import json
@@ -32,7 +33,7 @@ from insightrag.api.schemas import (
 )
 from insightrag.config import get_settings
 from insightrag.generation.rag_chain import RAGChain
-from insightrag.guardrails.input_guard import PromptInjectionDetected
+from insightrag.guardrails.input_guard import PromptInjectionError
 from insightrag.observability.metrics import (
     QUERY_COUNTER,
     QUERY_LATENCY,
@@ -69,6 +70,7 @@ app.add_middleware(
 
 # ────────────────────────── Health checks ──────────────────────────
 
+
 @app.get("/healthz", response_model=HealthResponse)
 async def liveness() -> HealthResponse:
     """Liveness: app is running. Always 200 unless the process is dead."""
@@ -78,7 +80,6 @@ async def liveness() -> HealthResponse:
 @app.get("/readyz", response_model=HealthResponse)
 async def readiness() -> HealthResponse:
     """Readiness: dependencies are reachable. Used by k8s/load balancers."""
-    settings = get_settings()
     qdrant_ok = True
     try:
         from insightrag.retrieval.vector_store import get_vector_store
@@ -92,6 +93,7 @@ async def readiness() -> HealthResponse:
     embedder_ok = True
     try:
         from insightrag.ingestion.embedder import get_embedding_model
+
         _ = get_embedding_model()
     except Exception as e:
         logger.error(f"Embedder unavailable: {e}")
@@ -107,12 +109,14 @@ async def readiness() -> HealthResponse:
 
 # ────────────────────────── Metrics ──────────────────────────────
 
+
 @app.get("/metrics")
 async def metrics():
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 # ────────────────────────── Query endpoints ──────────────────────
+
 
 @app.post("/v1/query", response_model=QueryResponse)
 async def query(
@@ -125,7 +129,7 @@ async def query(
             response = await rag.answer(req.question, filter_payload=filter_payload)
         QUERY_COUNTER.labels(status="success", streaming="false").inc()
         RETRIEVAL_LATENCY.observe(response.retrieval_latency_ms / 1000)
-    except PromptInjectionDetected as e:
+    except PromptInjectionError as e:
         QUERY_COUNTER.labels(status="rejected_injection", streaming="false").inc()
         raise HTTPException(status_code=400, detail=str(e)) from e
     except ValueError as e:
@@ -164,7 +168,7 @@ async def query_stream(
                     break
                 yield {"event": event["type"], "data": json.dumps(event["data"])}
             QUERY_COUNTER.labels(status="success", streaming="true").inc()
-        except PromptInjectionDetected as e:
+        except PromptInjectionError as e:
             QUERY_COUNTER.labels(status="rejected_injection", streaming="true").inc()
             yield {"event": "error", "data": json.dumps({"message": str(e)})}
         except Exception as e:
@@ -176,6 +180,7 @@ async def query_stream(
 
 
 # ────────────────────────── Ingestion endpoint ───────────────────
+
 
 @app.post("/v1/ingest", response_model=IngestResponse, status_code=202)
 async def ingest(req: IngestRequest) -> IngestResponse:
@@ -222,6 +227,7 @@ async def ingest(req: IngestRequest) -> IngestResponse:
 
 
 # ────────────────────────── helpers ──────────────────────────────
+
 
 def _build_filter(req: QueryRequest) -> dict | None:
     f: dict = {}

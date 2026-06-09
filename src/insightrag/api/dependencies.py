@@ -3,6 +3,7 @@
 Singletons are cached via lru_cache. The retriever has runtime state (the BM25 index),
 which is loaded on first request from disk or built from existing Qdrant payloads.
 """
+
 from __future__ import annotations
 
 from functools import lru_cache

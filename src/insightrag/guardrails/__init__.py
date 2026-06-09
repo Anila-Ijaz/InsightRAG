@@ -1,4 +1,4 @@
-from insightrag.guardrails.input_guard import InputGuard, PromptInjectionDetected
+from insightrag.guardrails.input_guard import InputGuard, PromptInjectionError
 from insightrag.guardrails.output_guard import OutputGuard
 
-__all__ = ["InputGuard", "OutputGuard", "PromptInjectionDetected"]
+__all__ = ["InputGuard", "OutputGuard", "PromptInjectionError"]

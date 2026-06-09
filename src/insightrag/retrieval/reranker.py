@@ -8,6 +8,7 @@ A cross-encoder scores (query, passage) jointly, which gives far better relevanc
 than the bi-encoder used for indexing. The base model is BGE reranker; in production
 you'd fine-tune it on your domain (see `training/train_reranker.py`).
 """
+
 from __future__ import annotations
 
 from functools import lru_cache
