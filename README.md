@@ -11,6 +11,15 @@ InsightRAG answers natural-language questions over the SEC EDGAR corpus of 10-K 
 
 > *"What were the principal drivers of Apple's gross margin change in fiscal 2023?"* → answer with citations to the exact MD&A paragraphs.
 
+It ships with a **Streamlit chat UI** and runs in two profiles:
+
+| Profile | What it shows | Footprint | Use |
+|---|---|---|---|
+| **Full** (`docker-compose.yml`) | Local BGE embeddings + cross-encoder reranker, full observability stack | ~5 GB image, 6–8 GB RAM | Showcase the complete retrieval engineering, run locally |
+| **Lite** (`docker-compose.lite.yml`) | OpenAI embeddings, reranker off, just `api + qdrant + UI` | ~508 MB image, <1 GB RAM | Free-tier cloud deploy + the live demo |
+
+The two share one codebase; the embedding provider and reranker are switched by env (`EMBEDDING_PROVIDER`, `ENABLE_RERANKER`). The lite profile is what gets deployed to AWS free tier.
+
 ---
 
 ## What makes this different from typical RAG demos
@@ -73,6 +82,8 @@ Most public RAG projects stop at "embed → store → retrieve → generate". Th
 ## Tech stack
 
 **Core:** Python 3.11, FastAPI (async), Pydantic v2
+**Frontend:** Streamlit chat UI (citations + live latency panel)
+**Embeddings:** local BGE (sentence-transformers) **or** OpenAI API — provider-switchable
 **Retrieval:** sentence-transformers (BGE), Qdrant, rank-bm25
 **Reranker:** BGE-reranker-base (fine-tuned via `training/train_reranker.py`)
 **Generation:** OpenAI / Anthropic SDK (provider-abstracted)
@@ -88,61 +99,72 @@ Most public RAG projects stop at "embed → store → retrieve → generate". Th
 
 ## Quick start
 
+### Lite profile (recommended — chat UI, no GPU, ~1 GB RAM)
+
 ```bash
-# 1. Clone and set env
 git clone https://github.com/Anila-Ijaz/insightrag
 cd insightrag
-cp .env.example .env
-# edit .env: set OPENAI_API_KEY
-# 2. Bring up the full stack
-make up
+cp .env.lite.example .env          # then set OPENAI_API_KEY in .env
 
-# 3. Ingest a sample 10-K
-make ingest TICKER=AAPL
+docker compose -f docker-compose.lite.yml up -d --build
+```
 
-# 4. Query
-curl -X POST http://localhost:8000/v1/query \
+Then open the **chat UI** and ask away:
+
+- **Chat UI:**  http://127.0.0.1:8501   *(use `127.0.0.1`, not `localhost`, if your Docker has an IPv6 quirk)*
+- **API docs:** http://127.0.0.1:8000/docs
+
+Ingest a filing from the UI sidebar, or via the API:
+
+```bash
+# Index Apple's latest 10-K from SEC EDGAR
+curl -X POST http://127.0.0.1:8000/v1/ingest \
+  -H "content-type: application/json" \
+  -d '{"ticker":"AAPL","limit":1}'
+
+# Ask a question
+curl -X POST http://127.0.0.1:8000/v1/query \
   -H "content-type: application/json" \
   -d '{"question":"What were Apple total net sales?","ticker":"AAPL","top_k":5}'
-
-# 5. Streaming
-curl -N -X POST http://localhost:8000/v1/query/stream \
-  -H "content-type: application/json" \
-  -d '{"question":"Summarize the principal risk factors","ticker":"AAPL"}'
 ```
+
+### Full profile (local BGE + cross-encoder reranker + observability)
+
+```bash
+cp .env.example .env               # set OPENAI_API_KEY
+make up                            # api + qdrant + postgres + redis + prometheus + grafana
+make ingest TICKER=AAPL
+```
+
+> Note: the full profile downloads local ML models (torch + sentence-transformers) and needs ~6–8 GB RAM.
 
 ---
 
 ## Evaluation results
 
-> Replace these numbers with your actual eval output after running `make eval`. The benchmarking script is in `evals/benchmark.py`.
+### Observed latency — lite profile, gpt-4o-mini
 
-### Retrieval (n=200 labeled queries from synthetic + manual annotations)
+Measured end-to-end on the lite stack (OpenAI embeddings, reranker off), single AAPL 10-K indexed (110 chunks):
+
+| Stage | Observed |
+|---|---:|
+| Retrieval (hybrid, OpenAI embed + Qdrant + BM25) | ~1.1–2.3 s |
+| Rerank | 0 ms *(disabled in lite)* |
+| Generation (gpt-4o-mini) | ~1.5–3.3 s |
+| **Total** | **~3.8–4.4 s** |
+
+> These are wall-clock observations (n≈2), not statistical p50/p95. Retrieval is dominated by two sequential network calls (OpenAI embedding + Qdrant). The full profile's local BGE embeddings remove the embedding round-trip.
+
+### Retrieval & answer quality — not yet benchmarked
+
+The harnesses are in [`evals/`](evals/) (retrieval MRR/nDCG/Recall and RAGAS faithfulness/relevancy), but the labeled test set is small and these tables are **not yet populated** — running them on a full corpus is the next milestone.
 
 | Configuration | MRR@10 | Recall@10 | nDCG@10 |
 |---|---:|---:|---:|
-| Dense only (BGE) | TBD | TBD | TBD |
-| Sparse only (BM25) | TBD | TBD | TBD |
-| Hybrid (RRF) | TBD | TBD | TBD |
-| Hybrid + fine-tuned reranker | **TBD** | **TBD** | **TBD** |
-
-### End-to-end RAG (RAGAS, n=50 questions)
-
-| Metric | Score |
-|---|---:|
-| Faithfulness | TBD |
-| Answer Relevancy | TBD |
-| Context Precision | TBD |
-| Context Recall | TBD |
-
-### Latency (p50/p95, 4-core CPU, gpt-4o-mini)
-
-| Stage | p50 | p95 |
-|---|---:|---:|
-| Retrieval (hybrid) | TBD | TBD |
-| Rerank (CPU) | TBD | TBD |
-| Generation (streaming, time-to-first-token) | TBD | TBD |
-| **Total** | TBD | TBD |
+| Dense only (BGE) | _pending_ | _pending_ | _pending_ |
+| Sparse only (BM25) | _pending_ | _pending_ | _pending_ |
+| Hybrid (RRF) | _pending_ | _pending_ | _pending_ |
+| Hybrid + fine-tuned reranker | _pending_ | _pending_ | _pending_ |
 
 ---
 
@@ -179,14 +201,18 @@ insightrag/
 │   ├── guardrails/         # Input (injection, PII) + output (citation validation)
 │   ├── api/                # FastAPI app, schemas, dependencies
 │   ├── observability/      # Logging, Prometheus metrics
-│   └── config.py           # pydantic-settings
+│   └── config.py           # pydantic-settings (provider switches)
+├── frontend/               # Streamlit chat UI (app.py + Dockerfile)
 ├── training/               # Reranker fine-tuning (synthetic Q&A + hard negatives)
 ├── evals/                  # RAGAS runner + retrieval benchmark + test set
 ├── tests/                  # pytest suite (chunker, retrieval, guardrails, API)
 ├── infra/                  # Prometheus config, k8s manifests, terraform
 ├── .github/workflows/      # ci.yml (lint/test/build), eval.yml (nightly RAGAS)
-├── Dockerfile              # Multi-stage build, non-root user, healthcheck
-├── docker-compose.yml      # api + qdrant + postgres + redis + prom + grafana
+├── Dockerfile              # Full image (local ML models)
+├── Dockerfile.lite         # Lite image (~508 MB, OpenAI embeddings, no torch)
+├── docker-compose.yml      # Full: api + qdrant + postgres + redis + prom + grafana
+├── docker-compose.lite.yml # Lite: api + qdrant + Streamlit UI
+├── requirements-lite.txt   # Lite runtime deps (subset of pyproject)
 ├── pyproject.toml          # Dependencies, ruff/mypy/pytest config
 └── Makefile                # install / dev / test / eval / up / down / ingest
 ```
@@ -195,7 +221,9 @@ insightrag/
 
 ## Roadmap
 
-- [ ] Streamlit / Next.js chat UI
+- [x] Streamlit chat UI
+- [ ] Deploy lite profile to AWS free tier (in progress)
+- [ ] Populate retrieval + RAGAS benchmark tables on a full corpus
 - [ ] Caching layer for embeddings + LLM responses (Redis)
 - [ ] Add table-aware chunking (10-Ks have lots of tables)
 - [ ] Citation hover preview in UI showing the source paragraph
