@@ -7,6 +7,10 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+### 🔗 Live demo: **[InsightRAG chat UI](http://63.182.64.177:8501)** &nbsp;·&nbsp; [API docs](http://63.182.64.177:8000/docs)
+
+> Deployed on AWS EC2 (eu-central-1, Frankfurt) as the lite profile. Ask about a 10-K — e.g. *"What were Apple's total net sales?"* (AAPL is pre-indexed). Write endpoints are protected by an API key; the UI is open.
+
 InsightRAG answers natural-language questions over the SEC EDGAR corpus of 10-K filings with cited, grounded responses. Built to demonstrate the engineering decisions that separate a tutorial from a production RAG system.
 
 > *"What were the principal drivers of Apple's gross margin change in fiscal 2023?"* → answer with citations to the exact MD&A paragraphs.
@@ -222,7 +226,7 @@ insightrag/
 ## Roadmap
 
 - [x] Streamlit chat UI
-- [ ] Deploy lite profile to AWS free tier (in progress)
+- [x] Deploy lite profile to AWS (EC2, Frankfurt) with API-key auth
 - [ ] Populate retrieval + RAGAS benchmark tables on a full corpus
 - [ ] Caching layer for embeddings + LLM responses (Redis)
 - [ ] Add table-aware chunking (10-Ks have lots of tables)
