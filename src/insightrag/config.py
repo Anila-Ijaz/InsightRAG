@@ -84,6 +84,11 @@ class Settings(BaseSettings):
     enable_injection_detection: bool = True
     max_query_length: int = 1000
 
+    # ── Security ─────────────────────────────────────────────────────
+    # Optional shared-secret API key. When set, /v1/query and /v1/ingest require
+    # the `X-API-Key` header to match. Leave unset (None) to disable auth (local dev).
+    api_key: SecretStr | None = None
+
 
 @lru_cache
 def get_settings() -> Settings:

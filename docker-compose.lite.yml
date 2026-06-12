@@ -22,6 +22,7 @@ services:
       - LLM_PROVIDER=openai
       - LLM_MODEL=${LLM_MODEL:-gpt-4o-mini}
       - OPENAI_API_KEY=${OPENAI_API_KEY:?set OPENAI_API_KEY in your environment or .env}
+      - API_KEY=${API_KEY:-}
       - QDRANT_URL=http://qdrant:6333
     depends_on:
       qdrant:
@@ -39,6 +40,7 @@ services:
       - "${UI_PORT:-8501}:8501"
     environment:
       - INSIGHTRAG_API_URL=http://api:8000
+      - INSIGHTRAG_API_KEY=${API_KEY:-}
     depends_on:
       - api
     restart: unless-stopped

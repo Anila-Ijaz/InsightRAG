@@ -12,7 +12,11 @@ import requests
 import streamlit as st
 
 API_URL = os.getenv("INSIGHTRAG_API_URL", "http://localhost:8000").rstrip("/")
+API_KEY = os.getenv("INSIGHTRAG_API_KEY", "")
 REQUEST_TIMEOUT = 120
+
+# Sent on write endpoints when the backend enforces an API key.
+AUTH_HEADERS = {"X-API-Key": API_KEY} if API_KEY else {}
 
 st.set_page_config(page_title="InsightRAG", page_icon="📊", layout="centered")
 
@@ -30,7 +34,9 @@ def run_query(question: str, ticker: str | None, top_k: int) -> dict:
     payload: dict = {"question": question, "top_k": top_k}
     if ticker:
         payload["ticker"] = ticker.upper()
-    r = requests.post(f"{API_URL}/v1/query", json=payload, timeout=REQUEST_TIMEOUT)
+    r = requests.post(
+        f"{API_URL}/v1/query", json=payload, headers=AUTH_HEADERS, timeout=REQUEST_TIMEOUT
+    )
     r.raise_for_status()
     return r.json()
 
@@ -39,6 +45,7 @@ def run_ingest(ticker: str, limit: int) -> dict:
     r = requests.post(
         f"{API_URL}/v1/ingest",
         json={"ticker": ticker.upper(), "limit": limit},
+        headers=AUTH_HEADERS,
         timeout=600,
     )
     r.raise_for_status()

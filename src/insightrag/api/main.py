@@ -31,6 +31,7 @@ from insightrag.api.schemas import (
     QueryRequest,
     QueryResponse,
 )
+from insightrag.api.security import require_api_key
 from insightrag.config import get_settings
 from insightrag.generation.rag_chain import RAGChain
 from insightrag.guardrails.input_guard import PromptInjectionError
@@ -118,7 +119,7 @@ async def metrics():
 # ────────────────────────── Query endpoints ──────────────────────
 
 
-@app.post("/v1/query", response_model=QueryResponse)
+@app.post("/v1/query", response_model=QueryResponse, dependencies=[Depends(require_api_key)])
 async def query(
     req: QueryRequest,
     rag: Annotated[RAGChain, Depends(get_rag_chain)],
@@ -152,7 +153,7 @@ async def query(
     )
 
 
-@app.post("/v1/query/stream")
+@app.post("/v1/query/stream", dependencies=[Depends(require_api_key)])
 async def query_stream(
     req: QueryRequest,
     request: Request,
@@ -182,7 +183,12 @@ async def query_stream(
 # ────────────────────────── Ingestion endpoint ───────────────────
 
 
-@app.post("/v1/ingest", response_model=IngestResponse, status_code=202)
+@app.post(
+    "/v1/ingest",
+    response_model=IngestResponse,
+    status_code=202,
+    dependencies=[Depends(require_api_key)],
+)
 async def ingest(req: IngestRequest) -> IngestResponse:
     """Synchronous ingestion endpoint. In production this would enqueue a Celery task."""
     # Lazy import to keep cold-start fast

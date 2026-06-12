@@ -85,3 +85,32 @@ def test_query_succeeds(client):
     assert "citations" in body
     assert "metrics" in body
     assert body["metrics"]["total_latency_ms"] > 0
+
+
+def test_api_key_disabled_by_default(client):
+    # No API_KEY configured (conftest) → no header required.
+    r = client.post("/v1/query", json={"question": "test", "top_k": 5})
+    assert r.status_code == 200
+
+
+def test_api_key_enforced_when_set(client, monkeypatch):
+    from insightrag.config import get_settings
+
+    monkeypatch.setenv("API_KEY", "secret-123")
+    get_settings.cache_clear()
+    try:
+        # Missing header → 401
+        r = client.post("/v1/query", json={"question": "test", "top_k": 5})
+        assert r.status_code == 401
+        # Wrong key → 401
+        r = client.post(
+            "/v1/query", json={"question": "test", "top_k": 5}, headers={"X-API-Key": "nope"}
+        )
+        assert r.status_code == 401
+        # Correct key → 200
+        r = client.post(
+            "/v1/query", json={"question": "test", "top_k": 5}, headers={"X-API-Key": "secret-123"}
+        )
+        assert r.status_code == 200
+    finally:
+        get_settings.cache_clear()
