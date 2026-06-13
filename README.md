@@ -245,17 +245,13 @@ insightrag/
 
 ---
 
-## Roadmap
+## Status
 
-- [x] Streamlit chat UI
-- [x] Deploy lite profile to AWS (EC2, Frankfurt) with API-key auth
-- [x] Retrieval + RAGAS benchmarks (3-ticker corpus, 60 synthetic labels)
-- [ ] Expand eval: larger corpus, fine-tuned-reranker ablation, hand-labeled reference answers (for context precision/recall)
-- [ ] Caching layer for embeddings + LLM responses (Redis)
-- [ ] Add table-aware chunking (10-Ks have lots of tables)
-- [ ] Citation hover preview in UI showing the source paragraph
-- [ ] Multi-document comparison ("compare AAPL vs MSFT risk factors")
-- [ ] Self-hosted Llama 3 fallback via vLLM (needs a GPU host)
+- ✅ **Live on AWS** — EC2 (Frankfurt), Elastic IP, API-key auth
+- ✅ **Streamlit chat UI** — citations + live latency panel
+- ✅ **Two run profiles** — full (local BGE + cross-encoder reranker) and lite (OpenAI, free-tier deployable)
+- ✅ **Benchmarked** — retrieval (MRR/nDCG/Recall) + RAGAS, with the real numbers above
+- ✅ **CI** — ruff lint/format, 25 passing tests, container build → GHCR
 
 ---
 
