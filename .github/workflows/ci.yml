@@ -44,12 +44,7 @@ jobs:
       - name: Run tests
         env:
           OPENAI_API_KEY: test-key
-        run: pytest --cov=src/insightrag --cov-report=xml --cov-report=term
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./coverage.xml
-          fail_ci_if_error: false
+        run: pytest --cov=src/insightrag --cov-report=term
 
   docker:
     runs-on: ubuntu-latest
