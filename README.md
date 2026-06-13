@@ -3,7 +3,15 @@
 **Production-grade Retrieval-Augmented Generation system for SEC 10-K financial filings.**
 
 [![CI](https://github.com/Anila-Ijaz/insightrag/actions/workflows/ci.yml/badge.svg)](https://github.com/Anila-Ijaz/insightrag/actions)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-async-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Pydantic](https://img.shields.io/badge/Pydantic-v2-E92063?logo=pydantic&logoColor=white)](https://docs.pydantic.dev/)
+[![Qdrant](https://img.shields.io/badge/Qdrant-vector%20DB-24386C?logo=qdrant&logoColor=white)](https://qdrant.tech/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-embeddings%20%2B%20LLM-412991?logo=openai&logoColor=white)](https://platform.openai.com/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-chat%20UI-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![Hybrid RAG](https://img.shields.io/badge/RAG-Hybrid%20%2B%20Reranker-6E40C9)](#what-makes-this-different-from-typical-rag-demos)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![AWS](https://img.shields.io/badge/AWS-EC2%20deployed-FF9900?logo=amazonec2&logoColor=white)](http://63.182.64.177:8501)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ### 🔗 Live demo: **[InsightRAG chat UI](http://63.182.64.177:8501)** &nbsp;·&nbsp; [API docs](http://63.182.64.177:8000/docs)
