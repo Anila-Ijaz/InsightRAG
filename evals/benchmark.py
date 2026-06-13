@@ -52,16 +52,20 @@ async def benchmark(testset_path: Path, k: int = 10) -> dict[str, dict[str, floa
     embedder = get_embedding_model()
     vector_store = get_vector_store()
     bm25 = BM25Index.load(Path("data/bm25_index.pkl"))
-    reranker = get_reranker()
 
-    # Four configurations
+    # The cross-encoder reranker needs torch; only benchmark it when it's enabled.
+    use_reranker = settings.enable_reranker
+    reranker = get_reranker() if use_reranker else None
+
+    # Configurations (dense / sparse / hybrid, plus hybrid+rerank when available)
     dense_only = HybridRetriever(vector_store, bm25, embedder, fusion="weighted", alpha=1.0)
     sparse_only = HybridRetriever(vector_store, bm25, embedder, fusion="weighted", alpha=0.0)
     hybrid_rrf = HybridRetriever(vector_store, bm25, embedder, fusion="rrf")
 
     configs = {"dense": dense_only, "sparse": sparse_only, "hybrid_rrf": hybrid_rrf}
+    extra = ["hybrid_rrf+rerank"] if use_reranker else []
     results: dict[str, dict[str, list[float]]] = {
-        name: {"mrr": [], "recall": [], "ndcg": []} for name in list(configs) + ["hybrid_rrf+rerank"]
+        name: {"mrr": [], "recall": [], "ndcg": []} for name in list(configs) + extra
     }
 
     testset = [json.loads(l) for l in testset_path.read_text().splitlines() if l.strip()]
@@ -78,13 +82,14 @@ async def benchmark(testset_path: Path, k: int = 10) -> dict[str, dict[str, floa
             results[name]["recall"].append(recall_at_k(ids, relevant, k))
             results[name]["ndcg"].append(ndcg_at_k(ids, relevant, k))
 
-        # hybrid + rerank
-        candidates = await hybrid_rrf.retrieve(query, top_k=settings.retrieval_top_k)
-        reranked = reranker.rerank(query, candidates, top_k=k)
-        ids = [c.chunk_id for c in reranked]
-        results["hybrid_rrf+rerank"]["mrr"].append(mrr_at_k(ids, relevant, k))
-        results["hybrid_rrf+rerank"]["recall"].append(recall_at_k(ids, relevant, k))
-        results["hybrid_rrf+rerank"]["ndcg"].append(ndcg_at_k(ids, relevant, k))
+        # hybrid + rerank (only when a reranker is enabled)
+        if use_reranker and reranker is not None:
+            candidates = await hybrid_rrf.retrieve(query, top_k=settings.retrieval_top_k)
+            reranked = reranker.rerank(query, candidates, top_k=k)
+            ids = [c.chunk_id for c in reranked]
+            results["hybrid_rrf+rerank"]["mrr"].append(mrr_at_k(ids, relevant, k))
+            results["hybrid_rrf+rerank"]["recall"].append(recall_at_k(ids, relevant, k))
+            results["hybrid_rrf+rerank"]["ndcg"].append(ndcg_at_k(ids, relevant, k))
 
     summary = {
         name: {metric: sum(vals) / len(vals) if vals else 0.0 for metric, vals in metrics.items()}

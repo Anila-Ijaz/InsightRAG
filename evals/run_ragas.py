@@ -29,12 +29,13 @@ from ragas.metrics import (
 )
 
 
-async def run_query(client: httpx.AsyncClient, base_url: str, question: str) -> dict:
-    resp = await client.post(
-        f"{base_url}/v1/query",
-        json={"question": question, "top_k": 5},
-        timeout=60,
-    )
+async def run_query(
+    client: httpx.AsyncClient, base_url: str, question: str, ticker: str | None = None
+) -> dict:
+    payload: dict = {"question": question, "top_k": 5}
+    if ticker:
+        payload["ticker"] = ticker
+    resp = await client.post(f"{base_url}/v1/query", json=payload, timeout=60)
     resp.raise_for_status()
     return resp.json()
 
@@ -46,7 +47,7 @@ async def collect_predictions(testset: list[dict], base_url: str) -> list[dict]:
         for i, row in enumerate(testset):
             logger.info(f"Query {i + 1}/{len(testset)}: {row['question'][:80]}")
             try:
-                pred = await run_query(client, base_url, row["question"])
+                pred = await run_query(client, base_url, row["question"], row.get("ticker"))
                 out.append({
                     "question": row["question"],
                     "answer": pred["answer"],
