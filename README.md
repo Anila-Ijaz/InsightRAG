@@ -249,12 +249,13 @@ insightrag/
 
 - [x] Streamlit chat UI
 - [x] Deploy lite profile to AWS (EC2, Frankfurt) with API-key auth
-- [ ] Populate retrieval + RAGAS benchmark tables on a full corpus
+- [x] Retrieval + RAGAS benchmarks (3-ticker corpus, 60 synthetic labels)
+- [ ] Expand eval: larger corpus, fine-tuned-reranker ablation, hand-labeled reference answers (for context precision/recall)
 - [ ] Caching layer for embeddings + LLM responses (Redis)
 - [ ] Add table-aware chunking (10-Ks have lots of tables)
 - [ ] Citation hover preview in UI showing the source paragraph
 - [ ] Multi-document comparison ("compare AAPL vs MSFT risk factors")
-- [ ] Self-hosted Llama 3 fallback via vLLM
+- [ ] Self-hosted Llama 3 fallback via vLLM (needs a GPU host)
 
 ---
 
